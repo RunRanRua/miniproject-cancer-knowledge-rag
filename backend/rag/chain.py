@@ -1,4 +1,4 @@
-from backend.retrieval.retriever import get_retriever
+from backend.retrieval.retriever import retrieve_documents
 from backend.generation.llm import get_llm
 from backend.generation.prompt import RAG_PROMPT
 
@@ -23,40 +23,61 @@ def _format_documents(documents) -> str:
 
     return "\n\n".join(formatted_documents)
 
+def _build_sources(documents):
+    sources = []
+    seen = set()
+
+    for i, document in enumerate(documents, start=1):
+        metadata = document.metadata
+        source_key = metadata.get("file_path")
+
+        if source_key in seen:
+            continue
+
+        seen.add(source_key)
+
+        sources.append({
+            "id": len(sources) + 1,
+            "title": metadata.get("title"),
+            "cancer_type": metadata.get("cancer_type"),
+            "topic": metadata.get("topic"),
+            "url": metadata.get("url"),
+            "file_path": metadata.get("file_path"),
+        })
+
+    return sources
+
+
 def create_rag_chain():
-    retriever = get_retriever(k=4)
     llm = get_llm()
 
     def rag(question: str):
-        documents = retriever.invoke(question)
+        # 1. get relevant documents from the vector store
+        results = retrieve_documents(question, k=4)
+        documents = [document for document, score in results]
 
+        # 2. get llm output
         context = _format_documents(documents)
-
         messages = RAG_PROMPT.invoke({
             "context": context,
             "question": question,
         })
-
         response = llm.invoke(messages)
 
-
-        src = []
-        for i, document in enumerate(documents, start=1):
-            metadata = document.metadata
-
-            src.append({
-                "id": i,
-                "title": metadata.get("title"),
-                "cancer_type": metadata.get("cancer_type"),
-                "topic": metadata.get("topic"),
-                "url": metadata.get("url"),
-                "file_path": metadata.get("file_path"),
+        # 3. deduplicate sources & prepare the final output
+        sources = _build_sources(documents)
+        retrieval_results = []
+        for document, score in results:
+            retrieval_results.append({
+                "score": score,
+                "file_path": document.metadata.get("file_path"),
             })
 
         return {
             "answer": response.content,
-            "sources": src,
-            "documents": documents,
+            "sources": sources,
+            "retrieval_results": retrieval_results,
         }
+
 
     return rag
