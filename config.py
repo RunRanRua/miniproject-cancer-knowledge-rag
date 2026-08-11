@@ -22,6 +22,7 @@ MANIFEST_FILE = DATA_DIR / "manifest.json"
 # =========================
 
 VECTOR_STORE_DIR = BASE_DIR / "vector_store"
+COLLECTION_NAME = "cancer_knowledge"
 
 
 # =========================
@@ -30,6 +31,6 @@ VECTOR_STORE_DIR = BASE_DIR / "vector_store"
 
 LLM_PROVIDER = "ollama"
 OLLAMA_BASE_URL = "http://localhost:11434"
-OLLAMA_MODEL = "minimax-m3:cloud"
+LLM_MODEL = "minimax-m3:cloud"
 
-EMBEDDING_MODEL = "..."
+EMBEDDING_MODEL = "nomic-embed-text"

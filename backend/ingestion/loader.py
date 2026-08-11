@@ -10,7 +10,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def load_manifest(manifest_path = MANIFEST_FILE) -> dict:
+def _load_manifest(manifest_path = MANIFEST_FILE) -> dict:
     """"Load document metadata from the manifest file"""
     with manifest_path.open("r", encoding="utf-8") as f:
         return json.load(f)
@@ -26,7 +26,7 @@ def load_documents(
         data_dir (Path): The path to the data directory.
         manifest_path (Path): The path to the manifest file.
     """
-    manifest = load_manifest(manifest_path)
+    manifest = _load_manifest(manifest_path)
     # create a lookup table:
     metadata_map = { item["path"]: item for item in manifest["documents"] }
 
