@@ -1,4 +1,4 @@
-# Cancer Knowledge RAG
+# Mini Project: Cancer Knowledge RAG
 
 A domain-specific Retrieval-Augmented Generation (RAG) system for retrieving and answering questions about cancer based on publicly available information from the **National Cancer Institute (NCI)**.
 
