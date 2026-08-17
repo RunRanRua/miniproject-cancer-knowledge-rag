@@ -294,10 +294,10 @@ pytest tests/retrieval/test_history_aware.py -v -s
 
 This project demonstrates:
 
-✅ Clean, modular architecture with separated concerns (ingestion, retrieval, generation, memory)
-✅ Comprehensive code documentation with docstrings and inline comments
-✅ Robust testing with mocked external dependencies
-✅ User-friendly interface with Streamlit
-✅ Production-ready RAG pipeline with source attribution
-✅ Session-based conversation management
-✅ Easy to extend with new embedding/LLM providers
+- ✅ Clean, modular architecture with separated concerns (ingestion, retrieval, generation, memory)
+- ✅ Comprehensive code documentation with docstrings and inline comments
+- ✅ Robust testing with mocked external dependencies
+- ✅ User-friendly interface with Streamlit
+- ✅ Production-ready RAG pipeline with source attribution
+- ✅ Session-based conversation management
+- ✅ Easy to extend with new embedding/LLM providers

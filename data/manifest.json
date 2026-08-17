@@ -1,0 +1,90 @@
+{
+  "documents": [
+    {
+      "path": "nci/bladder_cancer/diagnosis.md",
+      "title": "Bladder Cancer Diagnosis",
+      "topic": "diagnosis",
+      "subtopic": null,
+      "url": "https://www.cancer.gov/types/bladder/diagnosis"
+    },
+    {
+      "path": "nci/bladder_cancer/overview.md",
+      "title": "What Is Bladder Cancer?",
+      "topic": "overview",
+      "subtopic": null,
+      "url": "https://www.cancer.gov/types/bladder"
+    },
+    {
+      "path": "nci/bladder_cancer/symptoms.md",
+      "title": "Bladder Cancer Symptoms",
+      "topic": "symptoms",
+      "subtopic": null,
+      "url": "https://www.cancer.gov/types/bladder/symptoms"
+    },
+    {
+      "path": "nci/bladder_cancer/treatment.md",
+      "title": "Bladder Cancer Treatment",
+      "topic": "treatment",
+      "subtopic": null,
+      "url": "https://www.cancer.gov/types/bladder/treatment"
+    },
+    {
+      "path": "nci/bladder_cancer/treatment_by_stage.md",
+      "title": "Treatment of Bladder Cancer by Stage",
+      "topic": "treatment",
+      "subtopic": "by_stage",
+      "url": "https://www.cancer.gov/types/bladder/treatment/by-stage"
+    },
+
+    {
+      "path": "nci/breast_cancer/diagnosis.md",
+      "title": "How Breast Cancer Is Diagnosed",
+      "topic": "diagnosis",
+      "subtopic": null,
+      "url": "https://www.cancer.gov/types/breast/diagnosis"
+    },
+    {
+      "path": "nci/breast_cancer/overview.md",
+      "title": "What Is Breast Cancer?",
+      "topic": "overview",
+      "subtopic": null,
+      "url": "https://www.cancer.gov/types/breast/what-is-breast-cancer"
+    },
+    {
+      "path": "nci/breast_cancer/symptoms.md",
+      "title": "Breast Cancer Signs and Symptoms",
+      "topic": "symptoms",
+      "subtopic": null,
+      "url": "https://www.cancer.gov/types/breast/symptoms"
+    },
+    {
+      "path": "nci/breast_cancer/treatment_by_stage.md",
+      "title": "Breast Cancer Treatment by Stage",
+      "topic": "treatment",
+      "subtopic": "by_stage",
+      "url": "https://www.cancer.gov/types/breast/treatment/by-stage"
+    },
+
+    {
+      "path": "nci/colorectal_cancer/overview.md",
+      "title": "Colorectal Cancer Overview",
+      "topic": "overview",
+      "subtopic": null,
+      "url": "https://www.cancer.gov/types/colorectal"
+    },
+    {
+      "path": "nci/colorectal_cancer/treatment_colon_cancer.md",
+      "title": "Colon Cancer Treatment (PDQ®)–Patient Version",
+      "topic": "treatment",
+      "subtopic": "colon_cancer",
+      "url": "https://www.cancer.gov/types/colorectal/patient/colon-treatment-pdq"
+    },
+    {
+      "path": "nci/colorectal_cancer/treatment_rectal_cancer.md",
+      "title": "Rectal Cancer Treatment (PDQ®)–Patient Version",
+      "topic": "treatment",
+      "subtopic": "rectal_cancer",
+      "url": "https://www.cancer.gov/types/colorectal/patient/rectal-treatment-pdq"
+    }
+  ]
+}
