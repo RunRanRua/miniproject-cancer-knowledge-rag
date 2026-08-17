@@ -1,0 +1,25 @@
+# Core dependencies
+langchain==0.1.20
+langchain-core==0.1.52
+langchain-text-splitters==0.0.1
+langchain-chroma==0.1.2
+langchain-ollama==0.1.1
+
+# Vector store and embeddings
+chromadb==0.4.24
+
+# LLM providers
+ollama==0.1.48
+
+# Web framework
+streamlit==1.40.2
+
+# Data processing
+pydantic==2.6.3
+
+# Testing
+pytest==9.0.2
+pytest-asyncio==0.23.3
+
+# Development
+python-dotenv==1.0.0

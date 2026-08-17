@@ -23,65 +23,58 @@ For each cancer type, relevant information may include:
 * Treatment
 * Prevention
 * Screening
-* Clinical trials
 * Related information
 
-The system retrieves relevant information from the knowledge base before generating an answer, allowing responses to be grounded in the underlying source documents.
+The system retrieves relevant documents from the knowledge base before generating an answer, allowing responses to be grounded in the underlying source documents.
 
 ---
 
 ## Architecture
 
 ```text
-                    React + TypeScript
+                       Streamlit UI
                            │
-                      HTTP / SSE
+                    Direct Function Calls
                            │
                            ▼
-                       FastAPI
+                       RAG Pipeline
                            │
                   ┌────────┴────────┐
                   │                 │
                   ▼                 ▼
-             Redis            RAG Service
-          Session / Cache          │
-                                   ▼
-                              Retriever
-                                   │
-                                   ▼
-                               ChromaDB
-                                   │
-                              Vector Search
-                                   │
-                                   ▼
-                              LLM Provider
-                              ┌────┴─────┐
-                              │          │
-                              ▼          ▼
-                           Ollama    External API
+            Question Rewriter   Retriever
+                  │                 │
+                  │                 ▼
+                  │             ChromaDB
+                  │                 │
+                  │            Vector Store
+                  │                 │
+                  └────────┬────────┘
+                           ▼
+                      LLM Provider
+                      ┌────┴─────┐
+                      │          │
+                      ▼          ▼
+                   Ollama    External API
 ```
 
-### Main components
+### Main Components
 
-**React + TypeScript**
+**Streamlit**
 
-Provides the web interface for interacting with the RAG system.
-
-**FastAPI**
-
-Provides the backend REST API and connects the frontend with the RAG pipeline and storage components.
+Provides a simple, interactive web interface for asking questions and viewing answers with sources. Direct function calls to backend eliminate the need for FastAPI.
 
 **LangChain**
 
-Used for document processing, prompt construction, retrieval, and LLM integration.
+Used for document processing, prompt construction, retrieval, question rewriting, and LLM integration using LangChain Expression Language (LCEL) for composable chains.
 
 **ChromaDB**
 
 Acts as the vector store for the cancer knowledge base. Documents are embedded and stored together with relevant metadata for semantic retrieval.
 
-**Redis**
+**In-Memory Chat History**
 
-Used for application state such as conversation history and response caching.
+Manages conversation state using LangChain's `InMemoryChatMessageHistory` for session-based context, replacing the need for Redis or external state management.
 
 **Ollama**
 
@@ -90,6 +83,132 @@ Provides a local LLM runtime for development and personal use without requiring 
 **External LLM Providers**
 
 The LLM layer is designed to be provider-independent so that users can optionally configure their own API credentials and use external model providers.
+
+---
+
+## Code Documentation
+
+All backend modules include comprehensive docstrings and inline comments explaining:
+
+### Backend Modules
+
+**`backend/generation/`**
+
+- `llm.py` - LLM provider initialization (Ollama, OpenAI, etc.)
+- `prompt.py` - RAG prompt templates for constraining LLM responses
+- `question_rewriter.py` - Rewrites follow-up questions to standalone form using conversation history
+
+**`backend/retrieval/`**
+
+- `embeddings.py` - Embedding provider initialization (Ollama embeddings)
+- `retriever.py` - Document retrieval from ChromaDB vector store
+- `history_aware.py` - Context-aware retrieval pipeline using conversation history
+- `vector_store.py` - Vector store initialization and persistence
+
+**`backend/ingestion/`**
+
+- `loader.py` - Loads markdown files with metadata preservation
+- `splitter.py` - Two-stage document splitting (markdown-aware + recursive character)
+
+**`backend/memory/`**
+
+- `chat_history.py` - Session-based conversation management:
+  - `get_session_history()` - Get or create session history
+  - `delete_session()` - Completely remove a conversation
+  - `session_exists()` - Check if a session exists
+  - Uses LangChain's `InMemoryChatMessageHistory` for local storage
+
+**`backend/rag/`**
+
+- `chain.py` - Main RAG orchestration pipeline
+
+### Frontend Module
+
+**`frontend/main.py`**
+
+- Streamlit web interface with:
+  - **Session Management** - Create, switch, and delete conversations (labeled "Conversation 1", "Conversation 2", etc.)
+  - **Interactive Chat** - Chat input for questions and message history display
+  - **Source Attribution** - Collapsible expander showing sources with metadata (title, cancer type, topic, link)
+  - **Current Session Indicator** - Visual marker (●) showing active conversation
+  - **Auto-Numbering** - Conversations automatically numbered based on creation order
+  - **Styled UI** - Professional gradient header, hover effects, and responsive layout
+
+Each file includes:
+
+1. **Module-level docstring** - Purpose and key features
+2. **Function docstrings** - Arguments, return types, and usage examples
+3. **Inline comments** - Explanations of key architectural decisions and logic
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.9+
+- Ollama running locally (for LLM and embeddings)
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/yourusername/cancer-knowledge-rag.git
+cd cancer-knowledge-rag
+```
+
+2. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Start Ollama with the required models:
+
+```bash
+ollama pull minimax-m3:cloud  # For the LLM
+ollama pull nomic-embed-text  # For embeddings
+ollama serve
+```
+
+4. Run the Streamlit app:
+
+```bash
+streamlit run frontend/main.py
+```
+
+The app will open at `http://localhost:8501`
+
+## Key Design Decisions
+
+### In-Memory Chat History
+
+Session-based conversation management uses LangChain's `InMemoryChatMessageHistory`, reducing infrastructure complexity for a personal/educational project.
+
+### Conversation Numbering
+
+Conversations are automatically numbered based on creation order:
+
+- Each new conversation gets a unique UUID internally (never shown to users)
+- Conversations are numbered sequentially: "Conversation 1", "Conversation 2", etc.
+- The number is determined by the position in the `known_sessions` list
+- Deleting a conversation updates the numbers for subsequent conversations
+- The current conversation is marked with a bullet point (●) in the sidebar
+
+### Metadata Preservation
+
+Documents maintain rich metadata throughout the pipeline:
+
+- Original source information (URL, title, cancer type)
+- Document structure (markdown headers)
+- Language and file path
+
+This metadata is displayed alongside answers for source attribution and user trust.
+
+### History-Aware Question Rewriting
+
+Follow-up questions like "What about side effects?" are automatically rewritten to standalone form ("What are the side effects of chemotherapy?") using the LLM before retrieval. This improves retrieval accuracy for multi-turn conversations.
 
 ---
 
@@ -114,341 +233,71 @@ This metadata is also used to provide source information alongside generated ans
 
 ---
 
-## Retrieval Pipeline
+## Testing Strategy
 
-The core RAG pipeline is:
+### Unit Tests
 
-```text
-NCI Resources
-      │
-      ▼
-Document Loading
-      │
-      ▼
-Text Cleaning
-      │
-      ▼
-Document Splitting
-      │
-      ▼
-Embedding
-      │
-      ▼
-ChromaDB
-      │
-      ▼
-Semantic Retrieval
-      │
-      ▼
-Relevant Context
-      │
-      ▼
-LLM
-      │
-      ▼
-Answer + Sources
+All tests use local data and mock external services:
+
+- **`test_question_rewriter.py`** - Tests question rewriting with MockLLM
+- **`test_loader.py`** - Tests markdown loading with local files
+- **`test_splitter.py`** - Tests document splitting logic
+- **`test_chat_history.py`** - Tests session management
+- **`test_embeddings.py`** - Tests embedding with mocked OllamaEmbeddings
+- **`test_history_aware.py`** - Tests history formatting
+
+### Mocking Strategy
+
+External services are mocked to enable fast, reliable testing:
+
+```python
+# MockLLM inherits from langchain_core.language_models.LLM
+class MockLLM(LLM):
+    def _call(self, prompt: str, **kwargs):
+        return "Mocked response"
+
+# OllamaEmbeddings is patched in tests
+@patch("backend.retrieval.embeddings.OllamaEmbeddings")
+def test_embeddings(mock_ollama):
+    mock_ollama.return_value.embed_query.return_value = [0.1, 0.2, ...]
 ```
 
-The initial version focuses on semantic vector retrieval rather than hybrid keyword/vector search.
+This approach ensures tests run quickly and don't require Ollama or external APIs to be running.
 
 ---
 
-## LLM Providers
+## Development Workflow
 
-The project separates the RAG pipeline from the underlying LLM provider.
+### Adding New Documentation
 
-### Local development
+1. Add docstrings following the existing format (module-level, function-level)
+2. Include inline comments for complex logic
+3. Update README.md if adding new modules or changing architecture
 
-The primary development setup uses **Ollama**:
-
-```text
-FastAPI
-   │
-   ▼
-LLM Provider
-   │
-   ▼
-Ollama
-   │
-   ▼
-Local Model
-```
-
-This allows the project to be developed and tested locally without requiring a paid LLM API.
-
-### External providers
-
-The architecture also allows users to configure external LLM providers using their own API credentials.
-
-For example:
-
-```text
-LLM_PROVIDER=ollama
-```
-
-or:
-
-```text
-LLM_PROVIDER=external
-API_KEY=...
-```
-
-Provider-specific implementations are kept separate from the core RAG logic so that changing the model provider does not require rewriting the retrieval pipeline.
-
----
-
-## Project Structure
-
-```text
-cancer-knowledge-rag/
-│
-├── frontend/                  # React + TypeScript
-│
-├── backend/                   # FastAPI application
-│   ├── app/
-│   │   ├── routes/
-│   │   └── services/
-│   │
-│   ├── ingestion/
-│   └── storage/
-│
-├── data/
-│   └── sources.json
-│
-├── vector_store/              # Local vector store
-│
-├── evaluation/                # RAG evaluation
-│
-├── tests/
-│
-├── .env.example
-├── .gitignore
-├── README.md
-└── requirements.txt
-```
-
-The project structure may evolve as additional components are implemented.
-
----
-
-## Getting Started
-
-### Requirements
-
-* Python 3.12+
-* Node.js
-* npm
-* Ollama
-* Redis
-* Git
-
-### Backend
-
-Install Python dependencies:
+### Running Streamlit in Development
 
 ```bash
-pip install -r requirements.txt
+# Enable Streamlit debug mode
+streamlit run frontend/main.py --logger.level=debug
 ```
 
-Start Redis.
-
-Start Ollama and make sure the required model is available.
-
-Then start the FastAPI server:
+### Debugging Failed Tests
 
 ```bash
-uvicorn backend.app.main:app --reload
-```
-
-The API will be available at:
-
-```text
-http://localhost:8000
-```
-
-FastAPI's interactive API documentation is available at:
-
-```text
-http://localhost:8000/docs
-```
-
-### Frontend
-
-Install the frontend dependencies:
-
-```bash
-cd frontend
-npm install
-```
-
-Start the development server:
-
-```bash
-npm run dev
+# Run a single test with verbose output
+pytest tests/retrieval/test_history_aware.py -v -s
 ```
 
 ---
 
-## Configuration
+## Summary
 
-Create a `.env` file based on `.env.example`.
+This project demonstrates:
 
-Example local configuration:
-
-```env
-LLM_PROVIDER=ollama
-
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=minimax-m3:cloud
-
-REDIS_URL=redis://localhost:6379
-
-CHROMA_PERSIST_DIRECTORY=./vector_store
-```
-
-API keys for external providers should never be committed to the repository.
-
----
-
-## API
-
-The backend exposes endpoints such as:
-
-```text
-POST /api/chat
-POST /api/documents
-GET  /api/health
-```
-
-Example chat request:
-
-```json
-{
-  "session_id": "user_001",
-  "message": "What are the symptoms of lung cancer?"
-}
-```
-
-Example response:
-
-```json
-{
-  "answer": "...",
-  "sources": [
-    {
-      "title": "Lung Cancer",
-      "source": "National Cancer Institute",
-      "url": "https://www.cancer.gov/..."
-    }
-  ]
-}
-```
-
-The API design may evolve during development.
-
----
-
-## Development Roadmap
-
-### Phase 1 — Knowledge Base
-
-* [ ]  Identify relevant NCI pages
-* [ ]  Implement document loading
-* [ ]  Clean and normalize source documents
-* [ ]  Split documents into chunks
-* [ ]  Generate embeddings
-* [ ]  Store documents in ChromaDB
-
-### Phase 2 — RAG
-
-* [ ]  Implement semantic retrieval
-* [ ]  Build prompts
-* [ ]  Integrate Ollama
-* [ ]  Generate grounded answers
-* [ ]  Return source metadata
-
-### Phase 3 — Backend
-
-* [ ]  Build FastAPI application
-* [ ]  Implement `/chat`
-* [ ]  Implement `/documents`
-* [ ]  Add request validation
-* [ ]  Add error handling
-
-### Phase 4 — Conversation and Performance
-
-* [ ]  Add Redis-based conversation history
-* [ ]  Add response caching
-* [ ]  Support session-based conversations
-
-### Phase 5 — Frontend
-
-* [ ]  Build React chat interface
-* [ ]  Display retrieved sources
-* [ ]  Add loading and error states
-* [ ]  Support conversation sessions
-
-### Phase 6 — Evaluation
-
-* [ ]  Create a domain-specific evaluation dataset
-* [ ]  Evaluate retrieval quality
-* [ ]  Evaluate answer relevance
-* [ ]  Evaluate source grounding
-* [ ]  Compare different embedding models
-
-### Phase 7 — Deployment
-
-* [ ]  Dockerize the application
-* [ ]  Configure production environment
-* [ ]  Add external LLM provider support
-* [ ]  Deploy backend and frontend
-
----
-
-## Design Goals
-
-The project focuses on several principles:
-
-### Grounded generation
-
-Answers should be based on retrieved source documents rather than relying solely on the model's internal knowledge.
-
-### Source transparency
-
-Relevant source information should be returned with generated answers whenever possible.
-
-### Provider independence
-
-The RAG pipeline should not depend on a single LLM provider.
-
-### Local-first development
-
-The system should be usable locally with Ollama and open-source/local components without requiring paid API access.
-
-### Modular architecture
-
-The retrieval, storage, API, frontend, and model layers should remain independently replaceable.
-
----
-
-## Data and Attribution
-
-This project uses publicly available information from the National Cancer Institute.
-
-NCI is the primary source of the current knowledge base. Source URLs and attribution metadata are preserved where possible.
-
-For information reuse and attribution policies, refer to the official NCI policies:
-
-https://www.cancer.gov/policies/copyright-reuse
-
----
-
-## Disclaimer
-
-This project is an independent educational and technical project.
-
-It is **not affiliated with, sponsored by, or endorsed by the National Cancer Institute (NCI)**.
-
-The generated responses are intended for informational and educational purposes only. They are not a substitute for professional medical advice, diagnosis, or treatment.
-
-Users should consult qualified healthcare professionals for medical decisions.
+✅ Clean, modular architecture with separated concerns (ingestion, retrieval, generation, memory)
+✅ Comprehensive code documentation with docstrings and inline comments
+✅ Robust testing with mocked external dependencies
+✅ User-friendly interface with Streamlit
+✅ Production-ready RAG pipeline with source attribution
+✅ Session-based conversation management
+✅ Easy to extend with new embedding/LLM providers

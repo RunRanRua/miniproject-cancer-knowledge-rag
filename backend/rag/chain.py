@@ -1,8 +1,29 @@
+"""RAG Chain Module
+
+Orchestrates the complete Retrieval-Augmented Generation (RAG) pipeline:
+1. Retrieve relevant documents from vector store
+2. Format documents with metadata
+3. Generate LLM response using retrieved context
+4. Extract and deduplicate source information
+
+The RAG chain is the main orchestration point for answering user questions.
+"""
+
 from backend.retrieval.retriever import retrieve_documents
 from backend.generation.llm import get_llm
 from backend.generation.prompt import RAG_PROMPT
 
 def _format_documents(documents) -> str:
+    """Format retrieved documents for LLM consumption.
+    
+    Creates a readable format with numbered sources and metadata.
+    
+    Args:
+        documents: List of LangChain Document objects from retrieval
+        
+    Returns:
+        Formatted string with source information and content
+    """
     formatted_documents =[]
 
     for i, document in enumerate(documents, start=1):
@@ -24,6 +45,14 @@ def _format_documents(documents) -> str:
     return "\n\n".join(formatted_documents)
 
 def _build_sources(documents):
+    """Extract and deduplicate source information from documents.
+    
+    Args:
+        documents: List of retrieved documents
+        
+    Returns:
+        List of deduplicated source metadata dicts
+    """
     sources = []
     seen = set()
 
@@ -49,6 +78,7 @@ def _build_sources(documents):
 
 
 def create_rag_chain():
+    """Create and return the RAG chain function."""
     llm = get_llm()
 
     def rag(question: str):
